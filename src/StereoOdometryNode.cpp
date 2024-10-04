@@ -27,6 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "rtabmap_odom/stereo_odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
+#ifdef RTABMAP_PYTHON
+#include <rtabmap/core/PythonInterface.h>
+#endif
 
 int main(int argc, char **argv)
 {
@@ -67,10 +70,16 @@ int main(int argc, char **argv)
 
 	}
 
+#ifdef RTABMAP_PYTHON
+	rtabmap::PythonInterface pythonInterface;
+#endif
 	rclcpp::init(argc, argv);
 	rclcpp::NodeOptions options;
 	options.arguments(arguments);
-	rclcpp::spin(std::make_shared<rtabmap_odom::StereoOdometry>(options));
+	auto node = std::make_shared<rtabmap_odom::StereoOdometry>(options);
+	rclcpp::executors::MultiThreadedExecutor executor;
+	executor.add_node(node);
+	executor.spin();
 	rclcpp::shutdown();
 	return 0;
 }
