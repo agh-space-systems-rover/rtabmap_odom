@@ -64,7 +64,7 @@ RGBDOdometry::RGBDOdometry(const rclcpp::NodeOptions & options) :
 		approxSync6_(0),
 		exactSync6_(0),
 		topicQueueSize_(10),
-		syncQueueSize_(2),
+		syncQueueSize_(5),
 		keepColor_(false)
 {
 	OdometryROS::init(false, true, false);
@@ -108,13 +108,13 @@ void RGBDOdometry::onOdomInit()
 	int qosCamInfo = this->declare_parameter("qos_camera_info", (int)qos());
 	subscribeRGBD = this->declare_parameter("subscribe_rgbd", subscribeRGBD);
 	rgbdCameras = this->declare_parameter("rgbd_cameras", rgbdCameras);
-	if(rgbdCameras <= 0)
+	if(rgbdCameras < 0)
 	{
-		rgbdCameras = 1;
+		rgbdCameras = 0;
 	}
 	keepColor_ = this->declare_parameter("keep_color", keepColor_);
-	this->declare_parameter("rgb_transport", std::string("raw"));
-	this->declare_parameter("depth_transport", std::string("raw"));
+	std::string rgbdTransport = this->declare_parameter("rgb_transport", std::string("raw"));
+	std::string depthTransport = this->declare_parameter("depth_transport", std::string("raw"));
 
 	RCLCPP_INFO(this->get_logger(), "RGBDOdometry: approx_sync    = %s", approxSync?"true":"false");
 	if(approxSync)
@@ -126,6 +126,8 @@ void RGBDOdometry::onOdomInit()
 	RCLCPP_INFO(this->get_logger(), "RGBDOdometry: subscribe_rgbd = %s", subscribeRGBD?"true":"false");
 	RCLCPP_INFO(this->get_logger(), "RGBDOdometry: rgbd_cameras   = %d", rgbdCameras);
 	RCLCPP_INFO(this->get_logger(), "RGBDOdometry: keep_color     = %s", keepColor_?"true":"false");
+	RCLCPP_INFO(this->get_logger(), "RGBDOdometry: rgb_transport   = %s", rgbdTransport.c_str());
+	RCLCPP_INFO(this->get_logger(), "RGBDOdometry: depth_transport = %s", depthTransport.c_str());
 
 	rclcpp::SubscriptionOptions options;
 	options.callback_group = dataCallbackGroup_;
@@ -580,6 +582,8 @@ void RGBDOdometry::callback(
 		const sensor_msgs::msg::Image::ConstSharedPtr depth,
 		const sensor_msgs::msg::CameraInfo::ConstSharedPtr cameraInfo)
 {
+	tick(image->header.stamp);
+
 	if(!this->isPaused())
 	{
 		std::vector<cv_bridge::CvImageConstPtr> imageMsgs(1);
@@ -608,6 +612,8 @@ void RGBDOdometry::callback(
 void RGBDOdometry::callbackRGBDX(
 		const rtabmap_msgs::msg::RGBDImages::ConstSharedPtr images)
 {
+	tick(images->header.stamp);
+
 	if(!this->isPaused())
 	{
 		if(images->rgbd_images.empty())
@@ -631,6 +637,8 @@ void RGBDOdometry::callbackRGBDX(
 void RGBDOdometry::callbackRGBD(
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image)
 {
+	tick(image->header.stamp);
+
 	if(!this->isPaused())
 	{
 		std::vector<cv_bridge::CvImageConstPtr> imageMsgs(1);
@@ -647,6 +655,8 @@ void RGBDOdometry::callbackRGBD2(
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image,
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image2)
 {
+	tick(image->header.stamp);
+
 	if(!this->isPaused())
 	{
 		std::vector<cv_bridge::CvImageConstPtr> imageMsgs(2);
@@ -666,6 +676,8 @@ void RGBDOdometry::callbackRGBD3(
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image2,
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image3)
 {
+	tick(image->header.stamp);
+
 	if(!this->isPaused())
 	{
 		std::vector<cv_bridge::CvImageConstPtr> imageMsgs(3);
@@ -688,6 +700,8 @@ void RGBDOdometry::callbackRGBD4(
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image3,
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image4)
 {
+	tick(image->header.stamp);
+
 	if(!this->isPaused())
 	{
 		std::vector<cv_bridge::CvImageConstPtr> imageMsgs(4);
@@ -713,6 +727,8 @@ void RGBDOdometry::callbackRGBD5(
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image4,
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image5)
 {
+	tick(image->header.stamp);
+
 	if(!this->isPaused())
 	{
 		std::vector<cv_bridge::CvImageConstPtr> imageMsgs(5);
@@ -741,6 +757,8 @@ void RGBDOdometry::callbackRGBD6(
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image5,
 		const rtabmap_msgs::msg::RGBDImage::ConstSharedPtr image6)
 {
+	tick(image->header.stamp);
+
 	if(!this->isPaused())
 	{
 		std::vector<cv_bridge::CvImageConstPtr> imageMsgs(6);
